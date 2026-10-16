@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 module trinity_pipe_decoder (
     input  wire        clk,         // Bus clock frequency
     input  wire        rst_n,       // Asynchronous hardware reset (active low)
@@ -66,15 +67,14 @@ module trinity_pipe_decoder (
                 TRIT_0, TRIT_1: begin
                     // Hardware watchdog: signal crash if packet length exceeds 4 bits without Z
                     if (bit_count >= 3'd4) begin
-                        frame_error <= 1'b1;
-                        bit_count   <= 3'b000;
-                        pattern     <= 4'b0000;
-                    end else begin
-                        // Shift incoming bit into pattern and increment clock counter
-                        pattern   <= (pattern << 1) | trit_in;
-                        bit_count <= bit_count + 1'b1;
-                    end
-                end
+						frame_error <= 1'b1;
+						bit_count   <= 3'b000;
+						pattern     <= 4'b0000;
+		end else begin
+					pattern   <= (pattern << 1) | trit_in[0];
+					bit_count <= bit_count + 1'b1;
+					end
+				end
 
                 TRIT_Z: begin
                     // Physical framing delimiter detected. Latency-free capture in 0 cycles!
