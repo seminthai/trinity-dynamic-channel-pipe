@@ -1,9 +1,9 @@
-# Trinity Dynamic Channel Pipe Algorithm
-### Proof-of-Concept Specification: Real-Time Ternary Framing via Physical High-Z Logic
+# Trinity Dynamic Channel Pipe Architecture
+### Proof-of-Concept Specification: Real-Time Ternary Framing via Physical PAM-3 Logic
 
 This repository contains the software emulation model and verification stand for the **Trinity Pipe** architecture—a physical layer (PHY) protocol designed to optimize Input/Output (I/O) interface bandwidth and power consumption by shifting framing logic from software/link layers directly to physical silicon hardware.
 
-The project emulates data stream translation through a ternary transmission medium utilizing a **physical third logical state—High Impedance (`TRIT_Z`)** as a strict, asymmetric frame delimiter.
+The project emulates data stream translation through a ternary transmission medium utilizing a **symmetric PAM-3 alphabet (\(T \in \{-1, 0, +1\}\))**, where the physical state **-1 (represented as `TRIT_Z`)** acts as a strict, asymmetric frame delimiter.
 
 ---
 
@@ -11,12 +11,12 @@ The project emulates data stream translation through a ternary transmission medi
 
 The Trinity Pipe architecture completely eliminates the requirement for conventional link and network layer framing overheads (such as packet headers, start/stop bits, and software stream boundary markers):
 
-1. **Strict Physical Framing (Z-Marker):** Data block separation is handled entirely at the hardware level. Every token mapped into the pipe is strictly terminated by a High-Z state (`TRIT_Z`). For the receiving state machine, the transition of the physical conductor into High-Z acts as an instantaneous, zero-latency, edge-triggered interrupt to finalize the current sequence, evaluate its length, and reset the internal bit counter.
-2. **Ternary Prefix-Free Token Mapping (LUT):** The input binary stream is split into 4-bit nibbles (range 0..15) and mapped onto the ternary alphabet (`0`, `1`, `Z`) using a strict marker layout. The number of binary bits (`0` and `1`) transmitted before the line goes quiet (`Z`) uniquely determines the target value:
-   * **Zero-Bit Stream (1 Trit):** The value `0` immediately triggers `TRIT_Z` (the line instantly goes quiet, consuming 1 clock cycle).
+1. **Strict Physical Framing (-1 Marker):** Data block separation is handled entirely at the hardware level. Every token mapped into the pipe is strictly terminated by the -1 state (`TRIT_Z`). For the receiving state machine, the arrival of the -1 pulse acts as an instantaneous, zero-latency, edge-triggered interrupt to finalize the current sequence, evaluate its length, and reset the internal bit counter.
+2. **Ternary Prefix-Free Token Mapping (LUT):** The input binary stream is split into 4-bit nibbles (range 0..15) and mapped onto the ternary alphabet (`-1`, `0`, `1`) using a strict marker layout. The number of binary bits (`0` and `1`) transmitted before the line выдает маркер (`-1`) uniquely determines the target value:
+   * **Zero-Bit Stream (1 Trit):** The value `0` immediately triggers `TRIT_Z` (the line instantly транслирует -1, consuming 1 clock cycle).
    * **1-Bit to 3-Bit Streams (2-4 Trits):** Values 1 to 14 are transmitted as pure binary combinations immediately cut off by a mandatory terminal `TRIT_Z` token (e.g., `0Z`, `1Z`, `00Z`, ..., `111Z`).
    * **4-Bit Stream (5 Trits / Worst-Case Compensation):** The lowest frequency state (15) is translated as `0000Z`. While this single state introduces a 5-tact dilation (+25% overhead for a single nibble), it is mathematically compensated for by the ultra-short 1-tact and 2-tact sequences (`0`, `1`, `2`) at the opposite end of the distribution tree.
-3. **Symbolic Determinism (Absolute Zero Look-ahead):** The `HardwareDecode` architecture processes incoming trits sequentially in true real-time. Because `TRIT_Z` acts as an absolute physical wall between data packets, the decoder requires zero look-ahead buffering, packet accumulation, or sliding window tracking. The logic is optimized for direct FPGA/ASIC implementation, requiring only a basic 3-bit counter and an asynchronous High-Z detector.
+3. **Symbolic Determinism (Absolute Zero Look-ahead):** The `HardwareDecode` architecture processes incoming trits sequentially in true real-time. Because the -1 state acts as an absolute physical wall between data packets, the decoder requires zero look-ahead buffering, packet accumulation, or sliding window tracking. The logic is optimized for direct FPGA/ASIC implementation, requiring only a basic 3-bit counter and an asynchronous -1 pulse detector.
 4. **Fault Isolation & Self-Synchronization:** In contrast to look-ahead window decoders, the strict marker topology isolates line noise. If a physical glitch corrupts bits inside the pipe, the error is strictly confined to the current nibble. The arrival of the very next physical `TRIT_Z` marker instantly resets the receiver hardware, guaranteeing immediate re-synchronization.
 
 ---
@@ -26,7 +26,7 @@ The Trinity Pipe architecture completely eliminates the requirement for conventi
 When validated against maximum-entropy blocks where classical static compression tools reach their absolute mathematical limits (highly compressed RAR/7z archives, encrypted payloads, dense media streams), the Trinity Pipe architecture maintains rock-solid physical baselines:
 * **`Dynamic Data Reduction` (Time/Tact Saving):** **~15.6%** physical channel compaction inherently achieved via asymmetric symbol distribution.
 * **`Virtual Throughput Gain` (Effective Bandwidth Boost):** **+18.5%** effective bandwidth expansion across the physical conductor relative to the base source clock frequency.
-* **`Green Tech / Power Saving` (Energy Efficiency):** **~29.6%**. Because the High-Impedance state physically disconnects the driver from the transmission line (dropping the active current loop to zero), the I/O interface sub-components rest for nearly a third of the total transmission time, proportionally lowering thermal dissipation and line drive power.
+* **`Energy Efficiency Profile`:** By reducing the average number of physical line transitions per transmitted nibble below the binary baseline (4 bits = 4 transitions), the architecture significantly minimizes the dynamic switching capacitance (\(C_{pd}\)), lowering thermal dissipation and line drive power.
 
 ---
 
@@ -43,29 +43,12 @@ When validated against maximum-entropy blocks where classical static compression
 Since this repository serves as a **hardware emulation model** rather than a software-level codec, certain algorithmic implementations deliberately mirror physical silicon behavior rather than defensive C++ programming standards:
 
 1. **Unbounded Streaming `while`-loop (Lack of Vector Boundary Checks):** 
-   In `HardwareDecode`, the decoder scans forward sequentially until it strikes a physical `TRIT_Z` marker. In software, an corrupted or malformed stream lacking a `TRIT_Z` would cause an out-of-bounds memory read (Segmentation Fault). 
+   In `HardwareDecode`, the decoder scans forward sequentially until it strikes a physical `TRIT_Z` marker. In software, a corrupted or malformed stream lacking a `TRIT_Z` would cause an out-of-bounds memory read (Segmentation Fault). 
    * *The Emulation Fix:* A safety software padding/sentinel buffer of 32 `TRIT_0` elements is appended to the RAM vector to prevent stalls during verification.
    * *The Silicon Reality:* Physical wires have no concept of "vector boundaries." On an FPGA/ASIC chip, if a `TRIT_Z` is missed due to extreme line noise, the hardware counter simply keeps incrementing. In production silicon, this is handled by a trivial hardware watchdog (e.g., an `if (bit_count > 4) -> raise FRAME_ERROR` condition) which resets the bus state machine asynchronously.
 2. **Speed Evaluation Loop Overwrites (`RUN_PASSES` Cache Warping):**
    The verification stand executes the entire pipeline 5 times to benchmark emulated processing speed, continuously overwriting the pre-allocated `restoredNibbles` buffer. 
    * While this prevents dynamic allocation overhead, it triggers severe CPU L1/L2 cache warping. Subsequent passes run significantly faster because the data resides entirely within the processor core cache rather than cold RAM. This artificial boost reflects idealized, ultra-low-latency on-chip bus execution rather than standard OS memory management.
-
----
-
-## ⚡ Silicon RTL Implementation & Simulation Verified
-
-The Trinity Pipe protocol architecture has been fully scaled down to synthesizable production silicon and verified using industry-standard digital simulation tools (**Icarus Verilog**). 
-
-The hardware block avoids heavy software layers by utilizing two physical binary lines to transmit the ternary alphabet (`2'b00` = Trit 0, `2'b01` = Trit 1, `2'b10` = High-Z / Trit Z).
-
-* **Source Code Directory:** `/hardware`
-  * `trinity_pipe_decoder.v` — The synthesizable digital finite state machine (FSM). Requires only **7 flip-flops** of registers, guaranteeing an ultra-compact footprint.
-  * `tb_trinity_pipe_decoder.v` — Asynchronous digital testbench to simulate bus execution.
-
-### Production Hardware Simulation Insights:
-* **True Combinatorial Zero-Delay Matching:** Decoding logic achieves complete execution within a **0-clock-cycle window** directly at the falling edge of the physical High-Z detection circuit.
-* **On-Chip Watchdog Protection:** Line timeout parameters are bound directly into the gate configurations. In the event of catastrophic physical line short-circuiting or stuck-at noise, the core flags `frame_error` dynamically, safe-shielding the consumer-side register array from memory leakage.
-* **Live Sandbox Verification:** Independent hardware engineers can validate the architecture waves instantly online via the configured [EDA Playground Cloud Stand](https://edaplayground.com).
 
 ---
 
