@@ -137,7 +137,6 @@ int main() {
     size_t trinityTritsUsed = endTarget;
     double dataReductionRatio = (1.0 - ((double)trinityTritsUsed / standardBinaryBits)) * 100.0;
     double bandwidthBoost = (((double)standardBinaryBits / trinityTritsUsed) - 1.0) * 100.0;
-    double powerSavingRatio = ((double)zTritCount / trinityTritsUsed) * 100.0;
     double speedMBs = (((double)originBytes.size() * RUN_PASSES) / (1024.0 * 1024.0)) / durationSec;
 
     std::cout << "====================================================================\n";
@@ -154,10 +153,7 @@ int main() {
     std::cout << "--------------------------------------------------------------------\n";
     std::cout << "  [CHANNEL SPECTRUM] Logical 0 States       : " << zeroTritCount << " elements\n";
     std::cout << "  [CHANNEL SPECTRUM] Logical 1 States       : " << oneTritCount << " elements\n";
-    std::cout << "  [CHANNEL SPECTRUM] High-Z Framing (Z)     : " << zTritCount << " elements\n";
-    std::cout << "--------------------------------------------------------------------\n";
-    std::cout << "  [GREEN TECH]       High-Z Line Quietness  : " << powerSavingRatio << " %\n";
-    std::cout << "                     Estimated I/O Power Saving: -" << powerSavingRatio << " % Watt\n";
+    std::cout << "  [CHANNEL SPECTRUM] Ternary Framing (Z)    : " << zTritCount << " elements\n";
     std::cout << "--------------------------------------------------------------------\n";
     std::cout << "  [PERFORMANCE]      Emulated Core Speed    : " << speedMBs << " MB/s\n";
     std::cout << "====================================================================\n";
