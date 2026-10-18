@@ -11,6 +11,7 @@ tags:
 ---
 
 # Trinity Dynamic Channel Pipe Architecture
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23448044.svg)](https://doi.org)
 ### Open-Source Hardware Verification & Validation Stand: Real-Time Ternary Framing via Physical PAM-3 Logic
 
 This repository contains the official C++ hardware emulation model and the **synthesizable Verilog RTL implementation** for the **Trinity Pipe** baseline transport architecture. It serves as a hardware-proven proof-of-concept for shifting streaming framing logic from energy-intensive software protocols directly onto physical semiconductor hardware.
@@ -22,7 +23,7 @@ The system processes data transmission through a ternary medium utilizing a **sy
 
 ---
 
-## 🧠 Technical Overview & Core Architecture
+## Technical Overview & Core Architecture
 
 The Trinity Pipe architecture completely eliminates standard data link and network layer framing overheads (packet headers, start/stop sequences, and boundary escape characters):
 
@@ -39,7 +40,7 @@ The Trinity Pipe architecture completely eliminates standard data link and netwo
 
 ---
 
-## 📉 System Efficiency Constants (High-Entropy Profile)
+## System Efficiency Constants (High-Entropy Profile)
 
 When validated against maximum-entropy blocks where classical static compression tools reach their absolute mathematical limits (highly compressed archives, encrypted payloads, dense media streams), the Trinity Pipe architecture maintains rock-solid physical baselines:
 * **`Dynamic Data Reduction` (Time/Tact Saving):** ~15.6% physical channel compaction inherently achieved via asymmetric symbol distribution.
@@ -48,7 +49,7 @@ When validated against maximum-entropy blocks where classical static compression
 
 ---
 
-## 🛠️ Verification & Hardware Validation Stand
+## Verification & Hardware Validation Stand
 
 The repository provides a dual-layer verification ecosystem to validate the protocol mathematically and structurally.
 
@@ -73,6 +74,7 @@ To guarantee absolute robustness, the repository includes an automated **Constra
 The RTL core achieves **100% bit-accurate decoding** under continuous random stress-testing, proving perfect algorithmic alignment between the high-level C++ model and hardware-level silicon primitives.
 
 ---
+<img width="1493" height="831" alt="trinity_random_dump" src="https://github.com/user-attachments/assets/bf8a1350-4743-4fa1-beaa-6fb7f56614b0" />
 
 ## ⚠️ Legal Status & Commercial Restrictions (Dual-Licensing)
 
